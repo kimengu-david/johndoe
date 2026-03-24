@@ -98,7 +98,7 @@ jobs:
       - name: Generate SBOM (CycloneDX)
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk sbom --format=cyclonedx1.6+json --file=requirements.txt > sbom.cdx.json
+        run: snyk sbom --format=cyclonedx1.6+json --package-manager=pip --file=requirements.txt > sbom.cdx.json || snyk sbom --format=cyclonedx1.4+json --package-manager=pip --file=requirements.txt > sbom.cdx.json
 
       - name: Upload SBOM as artifact
         uses: actions/upload-artifact@v4
