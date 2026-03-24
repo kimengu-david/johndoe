@@ -1,22 +1,19 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Snyk CI/CD Demo - Express API on Lambda
+Description: Snyk CI/CD Demo - Flask API on Lambda
 
 Globals:
   Function:
     Timeout: 30
-    Runtime: nodejs18.x
+    Runtime: python3.12
 
 Resources:
   ApiFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: src/index.handler
+      Handler: src/lambda_handler.handler
       CodeUri: .
       MemorySize: 256
-      Environment:
-        Variables:
-          NODE_ENV: production
       Events:
         ProxyApi:
           Type: Api
@@ -28,6 +25,29 @@ Resources:
           Properties:
             Path: /
             Method: ANY
+
+  # ⚠️ Intentionally insecure S3 bucket for Snyk IaC testing
+  VulnerableBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: snyk-demo-vulnerable-bucket
+      AccessControl: PublicRead
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+
+  VulnerableBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref VulnerableBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action: "s3:GetObject"
+            Resource: !Sub "arn:aws:s3:::${VulnerableBucket}/*"
 
 Outputs:
   ApiUrl:
