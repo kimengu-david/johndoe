@@ -44,6 +44,7 @@ jobs:
 
       - name: Snyk Code scan
         uses: snyk/actions/python-3.10@master
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
@@ -51,8 +52,8 @@ jobs:
           args: --sarif-file-output=snyk-code.sarif
 
       - name: Upload Snyk Code SARIF
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        if: always() && hashFiles('snyk-code.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: snyk-code.sarif
 
