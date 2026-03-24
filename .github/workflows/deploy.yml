@@ -77,7 +77,38 @@ jobs:
           file: infra/template.yaml
 
   # ──────────────────────────────────────────────
-  # 4. Deploy to AWS (only on main, after all scans pass)
+  # 4. SBOM Generation (CycloneDX format)
+  # ──────────────────────────────────────────────
+  snyk-sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Snyk CLI
+        run: npm install -g snyk
+
+      - name: Generate SBOM (CycloneDX)
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk sbom --format=cyclonedx1.6+json --file=requirements.txt > sbom.cdx.json
+
+      - name: Upload SBOM as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx
+          path: sbom.cdx.json
+          retention-days: 90
+
+  # ──────────────────────────────────────────────
+  # 5. Deploy to AWS (only on main, after all scans pass)
   # ──────────────────────────────────────────────
   deploy:
     needs: [snyk-open-source, snyk-code, snyk-iac]
