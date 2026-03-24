@@ -35,7 +35,7 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --severity-threshold=high
+          args: --severity-threshold=high --report
 
   # ──────────────────────────────────────────────
   # 2. Snyk Code - static analysis (SAST)
@@ -52,7 +52,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: code test
-          args: --sarif-file-output=snyk-code.sarif
+          args: --sarif-file-output=snyk-code.sarif --report
 
       - name: Upload Snyk Code SARIF
         if: always() && hashFiles('snyk-code.sarif') != ''
@@ -73,7 +73,7 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --severity-threshold=medium
+          args: --severity-threshold=medium --report
           file: infra/template.yaml
 
   # ──────────────────────────────────────────────
