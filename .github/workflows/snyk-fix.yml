@@ -39,6 +39,7 @@ jobs:
         id: snyk_fix
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          SNYK_EXPERIMENTAL: "1"
         run: |
           snyk fix --file=requirements.txt || true
 
