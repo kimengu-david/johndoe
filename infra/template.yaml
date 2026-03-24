@@ -49,6 +49,33 @@ Resources:
             Action: "s3:GetObject"
             Resource: !Sub "arn:aws:s3:::${VulnerableBucket}/*"
 
+  # ⚠️ Intentionally insecure Security Group for Snyk IaC testing
+  InsecureSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Wide open security group - DO NOT use in production
+      SecurityGroupIngress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: "-1"
+          CidrIpv6: ::/0
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+
+  # ⚠️ Intentionally insecure RDS instance for Snyk IaC testing
+  InsecureDatabase:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceClass: db.t3.micro
+      Engine: mysql
+      MasterUsername: admin
+      MasterUserPassword: password123
+      PubliclyAccessible: true
+      StorageEncrypted: false
+      DeletionProtection: false
+      AllocatedStorage: 20
+
 Outputs:
   ApiUrl:
     Description: API Gateway endpoint URL
