@@ -49,6 +49,127 @@ Resources:
             Action: "s3:GetObject"
             Resource: !Sub "arn:aws:s3:::${VulnerableBucket}/*"
 
+  # ⚠️ Intentionally insecure Security Group for Snyk IaC testing
+  InsecureSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Wide open security group - DO NOT use in production
+      SecurityGroupIngress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: "-1"
+          CidrIpv6: ::/0
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+
+          
+
+
+  # ⚠️ Intentionally insecure RDS instance for Snyk IaC testing
+  InsecureDatabase:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceClass: db.t3.micro
+      Engine: mysql
+      MasterUsername: admin
+      MasterUserPassword: password123
+      PubliclyAccessible: true
+      StorageEncrypted: false
+      DeletionProtection: false
+      AllocatedStorage: 20
+
+  # ⚠️ Unencrypted SNS topic - no server-side encryption
+  InsecureTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: insecure-notifications
+
+  # ⚠️ SNS topic with open subscription policy
+  InsecureTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref InsecureTopic
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action: "sns:Publish"
+            Resource: !Ref InsecureTopic
+
+  # ⚠️ SQS queue with no encryption and open access
+  InsecureQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: insecure-queue
+      SqsManagedSseEnabled: false
+
+  InsecureQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref InsecureQueue
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action: "sqs:*"
+            Resource: !GetAtt InsecureQueue.Arn
+
+  # ⚠️ Unencrypted EBS volume
+  InsecureVolume:
+    Type: AWS::EC2::Volume
+    Properties:
+      AvailabilityZone: us-east-1a
+      Size: 10
+      Encrypted: false
+
+  # ⚠️ IAM role with wildcard permissions
+  OverprivilegedRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: insecure-admin-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: "*"
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: admin-access
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: "*"
+                Resource: "*"
+
+  # ⚠️ CloudTrail with logging disabled and no encryption
+  InsecureTrail:
+    Type: AWS::CloudTrail::Trail
+    Properties:
+      TrailName: insecure-trail
+      S3BucketName: !Ref VulnerableBucket
+      IsLogging: false
+      EnableLogFileValidation: false
+      IsMultiRegionTrail: false
+      IncludeGlobalServiceEvents: false
+
+  # ⚠️ Elasticsearch domain with no encryption, public access
+  InsecureSearchDomain:
+    Type: AWS::Elasticsearch::Domain
+    Properties:
+      DomainName: insecure-search
+      ElasticsearchVersion: "7.10"
+      NodeToNodeEncryptionOptions:
+        Enabled: false
+      EncryptionAtRestOptions:
+        Enabled: false
+      DomainEndpointOptions:
+        EnforceHTTPS: false
+
 Outputs:
   ApiUrl:
     Description: API Gateway endpoint URL
